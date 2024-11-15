@@ -23,7 +23,8 @@ onMounted(async () => {
 
   if (username) {
     try {
-      const response = await fetch(`http://localhost:3000/api/get-user/${username}`);
+      //const response = await fetch(`http://localhost:3000/api/get-user/${username}`);
+      const response = await fetch(`https://beejaybets.onrender.com/api/get-user/${username}`);
       const data = await response.json();
 
       if (response.ok) {
