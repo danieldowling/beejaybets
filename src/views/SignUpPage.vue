@@ -5,8 +5,9 @@
     <form @submit.prevent="handleSubmit">
       <div>
         <label for="username">UserName</label>
-        <input type="text" id="username" v-model="formData.username" required />
+        <input type="text" id="username" v-model="formData.username" required @input="checkUsername"/>
       </div>
+      <div v-if="usernameError" class="error">{{ usernameError }}</div>
       <div>
         <label for="firstname">First Name</label>
         <input type="text" id="firstname" v-model="formData.firstName" required />
@@ -24,7 +25,7 @@
         <input type="tel" id="phone" v-model="formData.phoneNumber" required />
       </div>
       <button @click="goBack" class="back-button">Back to Home</button>
-      <button type="submit">Submit</button>
+      <button type="submit" :disabled="usernameError || !isFormValid">Submit</button>
     </form>
   </div>
 </template>
@@ -42,7 +43,9 @@ export default {
         lastName: '',
         email: '',
         phoneNumber: ''
-      }
+      },
+      usernameError: '',
+      isFormValid: true,
     };
   },
     methods: {
@@ -50,34 +53,53 @@ export default {
     goBack() {
       this.$router.push('/');  // Navigate back to the homepage
     },
-    async handleSubmit() {
-        try {
-            //const response = await fetch('http://localhost:3000/api/signup', {
-            const response = await fetch('https://beejaybets.onrender.com/api/signup', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify(this.formData)
-            });
+    // Check if username is unique
+    async checkUsername() {
+      // Clear any existing error
+      this.usernameError = '';
+      
+      try {
+        const response = await axios.post('http://localhost:3000/check-username', {
+          username: this.formData.username,
+        });
 
-            if (response.ok) {
-                // Redirect to the Thank You page with username as a query param
-                this.$router.push({ 
-                    name: 'thank-you', 
-                    query: { 
-                        username: this.formData.username,  // Send the username to ThankYouPage
-                }    
-                });
-            } else {
-                alert('Error signing up!');
-            }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('There was an error submitting the form.');
-            }
+        if (response.data.message === 'Username available') {
+          this.usernameError = ''; // Clear any previous error
         }
+      } catch (error) {
+        if (error.response && error.response.status === 422) {
+          this.usernameError = error.response.data.message; // Display the error from the backend
+        } else {
+          this.usernameError = 'Error checking username. Please try again later.';
+        }
+      }
+    },
+    async handleSubmit() {
+      try {
+        const response = await axios.post('http://localhost:3000/api/signup', this.formData);
+
+        if (response.status === 200 && response.data.success === true) {
+          this.$router.push('/thank-you');
+        } else {
+            alert('Error signing up: ' + (response.data.message || 'Something went wrong.'));
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        if (error.response) {
+            // Show specific server-side error message
+            alert('Error signing up: ' + error.response.data.message);
+        } else {
+            // Show a generic error message if no response was received
+            alert('There was an error submitting the form.');
+        }
+      }
+    },
+  },
+  computed: {
+    isFormValid() {
+      return this.formData.username && this.formData.firstName && this.formData.lastName && this.formData.email && this.formData.phoneNumber;
     }
+  }
 };
 </script>
 
@@ -128,5 +150,15 @@ button {
 
 button:hover {
   background-color: #45a049;
+}
+
+button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.error {
+  color: red;
+  font-size: 12px;
 }
 </style>

@@ -15,12 +15,51 @@ app.use(express.json());
 // Airtable API URL and Key from environment variables
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 const AIRTABLE_ACCESS_TOKEN = process.env.AIRTABLE_ACCESS_TOKEN;
-const AIRTABLE_TABLE_SIGNUP = process.env.AIRTABLE_TABLE_SIGNUP;  // Airtable table name where data will be stored
+const AIRTABLE_TABLE_SIGNUP = process.env.AIRTABLE_TABLE_SIGNUP;
+const AIRTABLE_HEADERS = {
+  Authorization: `Bearer ${AIRTABLE_ACCESS_TOKEN}`,
+  'Content-Type': 'application/json',
+};
+
+// Endpoint to check if the username exists
+app.post('/check-username', async (req, res) => {
+  console.log(req.body)
+  const { username } = req.body;
+
+  // Validate that username is provided
+  if (!username || username.trim() === '') {
+    return res.status(422).json({ message: 'UserName is required' });
+  }
+
+  try {
+    // Fetch all records from the Users table
+    const response = await axios.get(`https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_SIGNUP}`, {
+      headers: AIRTABLE_HEADERS,
+    });
+
+
+    const existingUser = response.data.records.find( record => {
+      return record.fields.UserName && record.fields.UserName.toLowerCase() === username.toLowerCase();
+    });
+
+    if (existingUser) {
+      // Username already exists
+      return res.status(422).json({ message: 'UserName already taken' });
+    }
+
+    // Username is available
+    return res.status(200).json({ message: 'UserName available' });
+  } catch (error) {
+    console.error('Error checking username:', error);
+    return res.status(500).json({ message: 'Error checking username' });
+  }
+});
+
 
 // Endpoint to handle form submissions
 app.post('/api/signup', async (req, res) => {
-  try {
-    const { username, firstName, lastName, email, phoneNumber } = req.body;
+  try{
+  const { username, firstName, lastName, email, phoneNumber } = req.body;
 
     // Format the data to match Airtable's schema
     const data = {
@@ -38,15 +77,12 @@ app.post('/api/signup', async (req, res) => {
       `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_SIGNUP}`,
       data,
       {
-        headers: {
-          Authorization: `Bearer ${AIRTABLE_ACCESS_TOKEN}`,
-          'Content-Type': 'application/json',
-        },
+        headers: AIRTABLE_HEADERS,
       }
     );
 
     // Return a success response if data was successfully added to Airtable
-    res.status(200).json({ message: 'Form data submitted successfully!', data: response.data });
+    res.status(200).json({ success: true, message: 'Form data submitted successfully!', data: response.data });
   } catch (error) {
     console.error('Error submitting form:', error);
     res.status(500).json({ message: 'Error submitting form', error: error.message });
@@ -61,9 +97,7 @@ app.get('/api/get-user/:username', async (req, res) => {
     const response = await axios.get(
       `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}/${AIRTABLE_TABLE_SIGNUP}?filterByFormula={Username}="${username}"`,
       {
-        headers: {
-          Authorization: `Bearer ${AIRTABLE_ACCESS_TOKEN}`,
-        },
+        headers: AIRTABLE_HEADERS,
       }
     );
 
