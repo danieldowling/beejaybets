@@ -1,6 +1,8 @@
 // index.js
 const express = require('express');
 const axios = require('axios');
+const bcrypt = require('bcryptjs');
+const { parsePhoneNumberFromString } = require('libphonenumber-js');
 const cors = require('cors');
 require('dotenv').config();
 
@@ -23,7 +25,6 @@ const AIRTABLE_HEADERS = {
 
 // Endpoint to check if the username exists
 app.post('/check-username', async (req, res) => {
-  console.log(req.body)
   const { username } = req.body;
 
   // Validate that username is provided
@@ -58,8 +59,15 @@ app.post('/check-username', async (req, res) => {
 
 // Endpoint to handle form submissions
 app.post('/api/signup', async (req, res) => {
+  const { username, firstName, lastName, email, phoneNumber, password } = req.body;
+
+  if (!username || !password) {
+    return res.status(422).json({ message: 'Username and password are required' });
+  }
+
   try{
-  const { username, firstName, lastName, email, phoneNumber } = req.body;
+
+  const hashedPassword = await bcrypt.hash(password, 10);
 
     // Format the data to match Airtable's schema
     const data = {
@@ -69,6 +77,7 @@ app.post('/api/signup', async (req, res) => {
         LastName: lastName,
         Email: email,
         PhoneNumber: phoneNumber,
+        Password: hashedPassword
       },
     };
 
