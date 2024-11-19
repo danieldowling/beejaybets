@@ -3,40 +3,53 @@
 
     <h2>Sign Up for BeeJay Bets</h2>
     <form @submit.prevent="handleSubmit">
-      <div>
+
+        <div>
         <label for="username">UserName</label>
         <input type="text" id="username" v-model="formData.username" required @input="checkUsername"/>
       </div>
       <div v-if="usernameError" class="error">{{ usernameError }}</div>
-      <div>
+      <div class="form-row">
+      <div class="form-group">
         <label for="password">Password</label>
         <input type="password" id="password" v-model="formData.password" required />
       </div>
       <div v-if="passwordError" class="error">{{ passwordError }}</div>
-      <div>
+      <div class="form-group">
         <label for="confirmPassword">Confirm Password</label>
         <input type="password" id="confirmPassword" v-model="formData.confirmPassword" required />
       </div>
       <div v-if="passwordMatchError" class="error">{{ passwordMatchError }}</div>
-      <div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
         <label for="firstname">First Name</label>
         <input type="text" id="firstname" v-model="formData.firstName" required />
       </div>
-      <div>
+      <div class="form-group">
         <label for="lastname">Last Name</label>
         <input type="text" id="lastname" v-model="formData.lastName" required />
       </div>
-      <div>
-        <label for="email">Email</label>
-        <input type="email" id="email" v-model="formData.email" required />
-      </div>
-      <div>
+
+      <div class="form-group">
         <label for="phone">Phone Number</label>
         <input v-mask="'(###) ###-####'"  type="tel" id="phone" v-model="formData.phoneNumber" @blur="normalizePhoneNumber" required />
       </div>
       <div v-if="phoneNumberError" class="error">{{ phoneNumberError }}</div>
-      <button @click="goBack" class="back-button">Back to Home</button>
-      <button type="submit" :disabled="usernameError || !isFormValid">Submit</button>
+    <div class="form-group">
+        <label for="email">Email</label>
+        <input type="email" id="email" v-model="formData.email" required />
+      </div>
+    </div>
+    <div class="form-row">
+        <div class="form-group">
+            <button @click="goBack" class="back-button">Back to Home</button>
+        </div>
+        <div class="form-group">
+            <button type="submit" :disabled="usernameError || !isFormValid">Submit</button>
+        </div>
+        
+    </div>
     </form>
   </div>
 </template>
@@ -155,15 +168,35 @@ export default {
 
 <style scoped>
 .signup-page {
-  max-width: 500px;
+  max-width: 900px;
   margin: 0 auto;
   padding: 20px;
   text-align: center;
 }
 
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: space-between;
+}
+
+.form-group {
+  flex: 1 1 calc(50% - 20px); /* 50% width minus gap */
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 15px;
+}
+
 /* Styling for the Back button */
 .back-button {
-  background-color: #f44336;  /* Red color */
+  background-color: #781f19;  /* Red color */
   color: white;
   padding: 10px 20px;
   font-size: 16px;
@@ -174,11 +207,7 @@ export default {
 }
 
 .back-button:hover {
-  background-color: #d32f2f;  /* Darker red when hovering */
-}
-
-form div {
-  margin-bottom: 15px;
+  background-color: #ad2920;  /* Darker red when hovering */
 }
 
 input {
@@ -208,7 +237,17 @@ button:disabled {
 }
 
 .error {
-  color: red;
+  color: #ad2920;
   font-size: 12px;
+}
+
+@media (max-width: 768px) {
+  .form-group {
+    flex: 1 1 100%; /* Full width on smaller screens */
+  }
+
+  button {
+    width: 100%;
+  }
 }
 </style>
